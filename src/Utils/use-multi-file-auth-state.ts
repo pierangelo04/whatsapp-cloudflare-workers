@@ -5,7 +5,8 @@ import { join } from 'path'
 import { AuthenticationCreds, AuthenticationState, SignalDataTypeMap } from '../Types'
 import { initAuthCreds } from './auth-utils'
 import { BufferJSON } from './generics'
-import { R2Bucket } from '@cloudflare/workers-types' //CF
+import { R2Bucket, R2PutOptions } from '@cloudflare/workers-types' //CF
+import { logForDevelopment } from '..'
 
 // We need to lock files due to the fact that we are using async functions to read and write files
 // https://github.com/WhiskeySockets/Baileys/issues/794
@@ -68,17 +69,24 @@ export const useMultiFileAuthState = async(folder: string, R2Bucket: R2Bucket): 
 	const writeData = async (data: any, file: string) => {
 		const filePath = join(join(folder, fixFileName(file)!))
 		const dataFormatted = JSON.stringify(data, BufferJSON.replacer)
-		console.log("data", data)
-		console.log("folder", folder)
+		if (logForDevelopment) console.log('WARNING [writeData()] content of creds.js', '[data]', data)
+
+		const customMetadata: Record<string, string> = {}
+
+		const verifyExist = await R2Bucket.head(filePath)
+		if (!verifyExist) {
+			customMetadata.userBot = filePath?.split("/")?.slice(-2, -1)?.[0] || 'not found'
+			customMetadata.phone = data?.me?.id?.split(":")?.[0] || data?.id || 'not found'
+			customMetadata.path = filePath || 'not found'
+			customMetadata.created = new Date().toISOString()
+		}
+
+		else {
+			customMetadata.name = data?.me?.name || verifyExist?.customMetadata?.name || 'not found'
+		}
 
 		await R2Bucket.put(filePath, dataFormatted, {
-			customMetadata: {
-				userBot: filePath?.split("/")?.slice(-2, -1)?.[0] || 'not found',
-				name: data?.me?.name || 'not found',
-				phone: data?.me?.id?.split(":")?.[0] || data?.id || 'not found',
-				path: filePath || 'not found',
-				created: new Date().toISOString()
-			}
+			customMetadata: customMetadata
 		})
 	}
 

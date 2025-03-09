@@ -40,7 +40,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "dev": "wrangler dev",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@cacheable/node-cache": "^1.4.0",
     "@hapi/boom": "^9.1.3",
