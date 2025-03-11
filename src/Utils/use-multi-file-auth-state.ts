@@ -6,7 +6,7 @@ import { AuthenticationCreds, AuthenticationState, SignalDataTypeMap } from '../
 import { initAuthCreds } from './auth-utils'
 import { BufferJSON } from './generics'
 import { R2Bucket, R2PutOptions } from '@cloudflare/workers-types' //CF
-import { logForDevelopment } from '..'
+import { credsJsonStatus, logForDevelopment } from '..'
 
 // We need to lock files due to the fact that we are using async functions to read and write files
 // https://github.com/WhiskeySockets/Baileys/issues/794
@@ -70,10 +70,11 @@ export const useMultiFileAuthState = async(folder: string, R2Bucket: R2Bucket): 
 		const filePath = join(join(folder, fixFileName(file)!))
 		const dataFormatted = JSON.stringify(data, BufferJSON.replacer)
 		if (logForDevelopment.show) console.log('WARNING [writeData()] content of creds.js', '[data]', data) //CF
-		if (logForDevelopment.show) console.log('WARNING [writeData() content of creds.js]', '[folder]', folder) //CF
+		if (logForDevelopment.show) console.log('WARNING [writeData()] content of creds.js]', '[folder]', folder) //CF
 
-		const customMetadata: Record<string, string> = {}
+		let customMetadata: Record<string, string> = {}
 
+		if (logForDevelopment.show) console.log('WARNING [writeData()] await R2Bucket.head', '[filePath]', filePath) //CF
 		const verifyExist = await R2Bucket.head(filePath)
 		if (!verifyExist) {
 			customMetadata.userBot = filePath?.split("/")?.slice(-2, -1)?.[0] || 'not found'
@@ -83,24 +84,42 @@ export const useMultiFileAuthState = async(folder: string, R2Bucket: R2Bucket): 
 		}
 
 		else {
+			customMetadata = verifyExist?.customMetadata || {}
 			customMetadata.name = data?.me?.name || verifyExist?.customMetadata?.name || 'not found'
 		}
+		if (logForDevelopment.show) console.log('WARNING [writeData()] await R2Bucket.head', '[verifyExist]', verifyExist) //CF
 
-		await R2Bucket.put(filePath, dataFormatted, {
+		if (logForDevelopment.show) console.log('WARNING [writeData()] await R2Bucket.put', '[filePath]', filePath) //CF
+		if (logForDevelopment.show) console.log('WARNING [writeData()] await R2Bucket.put', '[customMetadata]', customMetadata) //CF
+		const resultR2BucketPut = await R2Bucket.put(filePath, dataFormatted, {
 			customMetadata: customMetadata
 		})
+		credsJsonStatus.update = true
+
+		if (logForDevelopment.show) console.log('WARNING [writeData()] await R2Bucket.get', '[filePath]', filePath) //CF
+		const resultR2BucketGet = await R2Bucket.get(filePath)
+
+		if (logForDevelopment.show) console.log('WARNING [writeData()] await R2Bucket.put', '[resultR2BucketPut]', resultR2BucketPut) //CF
+		if (logForDevelopment.show) console.log('WARNING [writeData()] await R2Bucket.get', '[resultR2BucketGet]', resultR2BucketGet) //CF
 	}
 
 	const readData = async(file: string) => {
 		try {
 			const filePath = join(folder, fixFileName(file)!)
 
+			if (logForDevelopment.show) console.log('WARNING [readData()] await R2Bucket.get', '[filePath]', filePath) //CF
+
 			const resultGetR2  = await R2Bucket.get(filePath)
+			if (logForDevelopment.show) console.log('WARNING [readData()] await R2Bucket.get', '[resultGetR2]', resultGetR2) //CF
 			if (!resultGetR2) { return null }
 
 			const data = await resultGetR2.text()
+			if (logForDevelopment.show) console.log('WARNING [readData()] await resultGetR2.text', '[resultGetR2]', data) //CF
 
-			return JSON.parse(data, BufferJSON.reviver)
+			const resultGetR2Parse = JSON.parse(data, BufferJSON.reviver)
+			if (logForDevelopment.show) console.log('WARNING [readData()] JSON.parse', '[resultGetR2Parse]', resultGetR2Parse) //CF
+
+			return resultGetR2Parse
 		} catch(error) {
 			return null
 		}
@@ -109,7 +128,9 @@ export const useMultiFileAuthState = async(folder: string, R2Bucket: R2Bucket): 
 	const removeData = async(file: string) => {
 		try {
 			const filePath = join(folder, fixFileName(file)!)
+			if (logForDevelopment.show) console.log('WARNING [removeData()] await R2Bucket.delete', '[filePath]', filePath) //CF
 			await R2Bucket.delete(filePath)
+			if (logForDevelopment.show) console.log('WARNING [removeData()] await R2Bucket.delete', '[void]', void 0) //CF
 		} catch{
 
 		}

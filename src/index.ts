@@ -17,4 +17,7 @@ export default makeWASocket
 export const logForDevelopment = {
     show: false
 }
+export const credsJsonStatus = {
+    update: false
+}
 //CF /\

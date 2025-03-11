@@ -258,14 +258,15 @@ export const makeSocket = (config: SocketConfig) => {
 		let node: proto.IClientPayload
 		if(!creds.me) {
 			node = generateRegistrationNode(creds, config)
-			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[creds generateRegistrationNode()]', config) //CF
-			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[config generateRegistrationNode()]', creds) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[creds generateRegistrationNode()]', creds) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[config generateRegistrationNode()]', config) //CF
 			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[node generateRegistrationNode()]', node) //CF
+
 			logger.info({ node }, 'not logged in, attempting registration...')
 		} else {
 			node = generateLoginNode(creds.me.id, config)
-			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[creds.me.id generateLoginNode()]', creds.me.id) //CF
-			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[config generateLoginNode()]', creds) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[creds generateLoginNode()]', creds) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[config generateLoginNode()]', config) //CF
 			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[node generateLoginNode()]', node) //CF
 			logger.info({ node }, 'logging in...')
 		}
