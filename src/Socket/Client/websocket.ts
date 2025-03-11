@@ -72,7 +72,7 @@ export class WebSocketClient extends AbstractSocketClient {
 
 		timeMaxOpenSocket = setTimeout(() => {
 			this?.socket?.close()
-		}, Math.floor(Math.random() * (50000 - 30000 + 1)) + 30000)
+		}, 50000/* Math.floor(Math.random() * (50000 - 30000 + 1)) + 30000 */)
 
 		this.socket.addEventListener('open', (event) => this.emit('open', event))
 		this.socket.addEventListener('message', (event) => {

@@ -108,7 +108,7 @@ export default {
 							catch (error) {
 								reject(error)
 							}
-						}, 30000)
+						}, 50000)
 					})
 				)
 
