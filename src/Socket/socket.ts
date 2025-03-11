@@ -109,9 +109,9 @@ export const makeSocket = (config: SocketConfig) => {
 	const sendPromise = promisify(ws.send)
 	/** send a raw buffer */
 	const sendRawMessage = async(data: Uint8Array | Buffer) => {
-		if (logForDevelopment) console.log('') //CF
-		if (logForDevelopment) console.log('WARNING [SENT origin]: ', '[data]', data) //CF
-		if (logForDevelopment) console.log('') //CF
+		if (logForDevelopment.show) console.log('') //CF
+		if (logForDevelopment.show) console.log('WARNING [SENT origin]: ', '[data]', data) //CF
+		if (logForDevelopment.show) console.log('') //CF
 		if(!ws.isOpen) {
 			throw new Boom('Connection Closed', { statusCode: DisconnectReason.connectionClosed })
 		}
@@ -122,9 +122,9 @@ export const makeSocket = (config: SocketConfig) => {
 			async(resolve, reject) => {
 				try {
 					/*CF await sendPromise.call(ws, bytes) */
-					if (logForDevelopment) console.log('WARNING [before] [ws.send(bytes)]') //CF
+					if (logForDevelopment.show) console.log('WARNING [before] [ws.send(bytes)]') //CF
 					ws.send(bytes) //CF
-					if (logForDevelopment) console.log('WARNING [after] [ws.send(bytes)]') //CF
+					if (logForDevelopment.show) console.log('WARNING [after] [ws.send(bytes)]') //CF
 					resolve()
 				} catch(error) {
 					reject(error)
@@ -140,8 +140,8 @@ export const makeSocket = (config: SocketConfig) => {
 		}
 
 		const buff = encodeBinaryNode(frame)
-		if (logForDevelopment) console.log('WARNING [sendNode() Buffe]', '[buff]', buff) //CF
-		if (logForDevelopment) console.log('WARNING [sendNode() frame]', '[frame]', frame) //CF
+		if (logForDevelopment.show) console.log('WARNING [sendNode() Buffe]', '[buff]', buff) //CF
+		if (logForDevelopment.show) console.log('WARNING [sendNode() frame]', '[frame]', frame) //CF
 		return sendRawMessage(buff)
 	}
 
@@ -155,7 +155,7 @@ export const makeSocket = (config: SocketConfig) => {
 
 	/** await the next incoming message */
 	const awaitNextMessage = async<T>(sendMsg?: Uint8Array) => {
-		if (logForDevelopment) console.log('WARNING [awaitNextMessage()]', '[sendMsg]', sendMsg) //CF
+		if (logForDevelopment.show) console.log('WARNING [awaitNextMessage()]', '[sendMsg]', sendMsg) //CF
 		if(!ws.isOpen) {
 			throw new Boom('Connection Closed', {
 				statusCode: DisconnectReason.connectionClosed
@@ -237,43 +237,43 @@ export const makeSocket = (config: SocketConfig) => {
 		let helloMsg: proto.IHandshakeMessage = {
 			clientHello: { ephemeral: ephemeralKeyPair.public }
 		}
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[helloMsg1]', helloMsg) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[helloMsg1]', helloMsg) //CF
 		helloMsg = proto.HandshakeMessage.fromObject(helloMsg)
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[helloMsg2]', helloMsg) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[helloMsg2]', helloMsg) //CF
 
 		logger.info({ browser, helloMsg }, 'connected to WA')
 
 		const init = proto.HandshakeMessage.encode(helloMsg).finish()
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[init]', init) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[init]', init) //CF
 
 		const result = await awaitNextMessage<Uint8Array>(init)
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[result]', result) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[result]', result) //CF
 		const handshake = proto.HandshakeMessage.decode(result)
 
 		logger.trace({ handshake }, 'handshake recv from WA')
 
 		const keyEnc = await noise.processHandshake(handshake, creds.noiseKey)
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[keyEnc]', keyEnc) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[keyEnc]', keyEnc) //CF
 
 		let node: proto.IClientPayload
 		if(!creds.me) {
 			node = generateRegistrationNode(creds, config)
-			if (logForDevelopment) console.log('WARNING [validateConnection()]', '[creds generateRegistrationNode()]', config) //CF
-			if (logForDevelopment) console.log('WARNING [validateConnection()]', '[config generateRegistrationNode()]', creds) //CF
-			if (logForDevelopment) console.log('WARNING [validateConnection()]', '[node generateRegistrationNode()]', node) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[creds generateRegistrationNode()]', config) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[config generateRegistrationNode()]', creds) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[node generateRegistrationNode()]', node) //CF
 			logger.info({ node }, 'not logged in, attempting registration...')
 		} else {
 			node = generateLoginNode(creds.me.id, config)
-			if (logForDevelopment) console.log('WARNING [validateConnection()]', '[creds.me.id generateLoginNode()]', creds.me.id) //CF
-			if (logForDevelopment) console.log('WARNING [validateConnection()]', '[config generateLoginNode()]', creds) //CF
-			if (logForDevelopment) console.log('WARNING [validateConnection()]', '[node generateLoginNode()]', node) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[creds.me.id generateLoginNode()]', creds.me.id) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[config generateLoginNode()]', creds) //CF
+			if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[node generateLoginNode()]', node) //CF
 			logger.info({ node }, 'logging in...')
 		}
 
 		const payloadEnc = await noise.encrypt( //CF
 			proto.ClientPayload.encode(node).finish()
 		)
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[payloadEnc]', payloadEnc) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[payloadEnc]', payloadEnc) //CF
 
 		//CF \/
 		const parameterSendRawMessage = proto.HandshakeMessage.encode({
@@ -283,10 +283,10 @@ export const makeSocket = (config: SocketConfig) => {
 			},
 		})
 		//CF /\
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[parameterSendRawMessage]', parameterSendRawMessage) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[parameterSendRawMessage]', parameterSendRawMessage) //CF
 
 		const parameterSendRawMessageFinish = parameterSendRawMessage.finish() //CF
-		if (logForDevelopment) console.log('WARNING [validateConnection()]', '[parameterSendRawMessageFinish]', parameterSendRawMessageFinish) //CF
+		if (logForDevelopment.show) console.log('WARNING [validateConnection()]', '[parameterSendRawMessageFinish]', parameterSendRawMessageFinish) //CF
 
 		await sendRawMessage(
 			parameterSendRawMessageFinish //CF
@@ -336,9 +336,9 @@ export const makeSocket = (config: SocketConfig) => {
 	}
 
 	const onMessageReceived = (data: Buffer) => {
-		if (logForDevelopment) console.log('') //CF
-		if (logForDevelopment) console.log('WARNING [RECEIVING 2]: ', '[data]', data) //CF
-		if (logForDevelopment) console.log('') //CF
+		if (logForDevelopment.show) console.log('') //CF
+		if (logForDevelopment.show) console.log('WARNING [RECEIVING 2]: ', '[data]', data) //CF
+		if (logForDevelopment.show) console.log('') //CF
 		noise.decodeFrame(data, frame => {
 			// reset ping timeout
 			lastDateRecv = new Date()
@@ -378,8 +378,8 @@ export const makeSocket = (config: SocketConfig) => {
 	}
 
 	const end = (error: Error | undefined) => {
-		if (logForDevelopment) console.log('WARNING [end() start]', '[closed]', closed) //CF
-		if (logForDevelopment) console.log('WARNING [closed]', closed) //CF
+		if (logForDevelopment.show) console.log('WARNING [end() start]', '[closed]', closed) //CF
+		if (logForDevelopment.show) console.log('WARNING [closed]', closed) //CF
 		if(closed) {
 			logger.trace({ trace: error?.stack }, 'connection already closed')
 			return
@@ -413,7 +413,7 @@ export const makeSocket = (config: SocketConfig) => {
 			}
 		})
 		ev.removeAllListeners('connection.update')
-		if (logForDevelopment) console.log('WARNING [end() end]') //CF
+		if (logForDevelopment.show) console.log('WARNING [end() end]') //CF
 	}
 
 	const waitForSocketOpen = async() => {

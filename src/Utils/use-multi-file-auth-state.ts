@@ -69,8 +69,8 @@ export const useMultiFileAuthState = async(folder: string, R2Bucket: R2Bucket): 
 	const writeData = async (data: any, file: string) => {
 		const filePath = join(join(folder, fixFileName(file)!))
 		const dataFormatted = JSON.stringify(data, BufferJSON.replacer)
-		if (logForDevelopment) console.log('WARNING [writeData()]', '[data]', data) //CF
-		if (logForDevelopment) console.log('WARNING [writeData()]', '[folder]', folder) //CF
+		if (logForDevelopment.show) console.log('WARNING [writeData()]', '[data]', data) //CF
+		if (logForDevelopment.show) console.log('WARNING [writeData()]', '[folder]', folder) //CF
 
 		await R2Bucket.put(filePath, dataFormatted, {
 			customMetadata: {

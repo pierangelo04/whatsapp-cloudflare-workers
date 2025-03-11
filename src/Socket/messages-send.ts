@@ -707,11 +707,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			content: AnyMessageContent,
 			options: MiscMessageGenerationOptions = { }
 		) => {
-			if (logForDevelopment) console.log('WARNING [sendMessage()]', '[jid]', jid) //CF
-			if (logForDevelopment) console.log('WARNING [sendMessage()]', '[content]', content) //CF
-			if (logForDevelopment) console.log('WARNING [sendMessage()]', '[options]', options) //CF
+			if (logForDevelopment.show) console.log('WARNING [sendMessage()]', '[jid]', jid) //CF
+			if (logForDevelopment.show) console.log('WARNING [sendMessage()]', '[content]', content) //CF
+			if (logForDevelopment.show) console.log('WARNING [sendMessage()]', '[options]', options) //CF
 
-			if (logForDevelopment) console.log('WARNING [sendMessage()]', '[authState]', authState) //CF
+			if (logForDevelopment.show) console.log('WARNING [sendMessage()]', '[authState]', authState) //CF
 
 			const userJid = authState.creds.me!.id
 			if(

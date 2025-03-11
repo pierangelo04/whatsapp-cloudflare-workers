@@ -13,4 +13,8 @@ export type WASocket = ReturnType<typeof makeWASocket>
 export { makeWASocket }
 export default makeWASocket
 
-export const logForDevelopment = false //CF
+//CF \/
+export const logForDevelopment = {
+    show: false
+}
+//CF /\
