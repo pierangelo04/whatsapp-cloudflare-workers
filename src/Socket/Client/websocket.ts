@@ -67,7 +67,7 @@ export class WebSocketClient extends AbstractSocketClient {
 		this.socket = response?.webSocket
 		socketGlobal = response?.webSocket
 		if (!this.socket) {
-			if (logForDevelopment) console.log("ERRO [!this.socket] Error connecting to WhatsApp websocket")
+			if (logForDevelopment.show) console.log("ERRO [!this.socket] Error connecting to WhatsApp websocket")
 		}
 
 		timeMaxOpenSocket = setTimeout(() => {
@@ -76,9 +76,9 @@ export class WebSocketClient extends AbstractSocketClient {
 
 		this.socket.addEventListener('open', (event) => this.emit('open', event))
 		this.socket.addEventListener('message', (event) => {
-			if (logForDevelopment) console.log('')
-			if (logForDevelopment) console.log('WARNING [RECEIVING]: ', '[event.data]', event.data)
-			if (logForDevelopment) console.log('')
+			if (logForDevelopment.show) console.log('')
+			if (logForDevelopment.show) console.log('WARNING [RECEIVING]: ', '[event.data]', event.data)
+			if (logForDevelopment.show) console.log('')
 			let eventData = event.data
 			if (eventData instanceof ArrayBuffer) {
 				eventData = Buffer.from(eventData)
@@ -99,7 +99,7 @@ export class WebSocketClient extends AbstractSocketClient {
 	}
 
 	async close(): Promise<void> {
-		if (logForDevelopment) console.log('WARNING [closed()]')
+		if (logForDevelopment.show) console.log('WARNING [closed()]')
 		if(!this.socket) {
 			return
 		}
@@ -108,9 +108,9 @@ export class WebSocketClient extends AbstractSocketClient {
 		this.socket = null
 	}
 	send(str: string | Uint8Array/*CF , cb?: (err?: Error) => void */): boolean {
-		if (logForDevelopment) console.log('')
-		if (logForDevelopment) console.log('WARNING [SENT]: ', '[str]', str)
-		if (logForDevelopment) console.log('')
+		if (logForDevelopment.show) console.log('')
+		if (logForDevelopment.show) console.log('WARNING [SENT]: ', '[str]', str)
+		if (logForDevelopment.show) console.log('')
 		this.socket?.send(str/*CF , cb */)
 
 		return Boolean(this.socket)

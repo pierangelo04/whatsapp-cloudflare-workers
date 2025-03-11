@@ -14,8 +14,8 @@ export const generateSignalPubKey = (pubKey: Uint8Array | Buffer) => (
 export const Curve = {
 	generateKeyPair: (): KeyPair => {
 		const { pubKey, privKey } = libsignal.curve.generateKeyPair()
-		if (logForDevelopment) console.log('WARNING [generateKeyPair()]', '[pubKey]', pubKey) //CF
-		if (logForDevelopment) console.log('WARNING [generateKeyPair()]', '[privKey]', privKey) //CF
+		if (logForDevelopment.show) console.log('WARNING [generateKeyPair()]', '[pubKey]', pubKey) //CF
+		if (logForDevelopment.show) console.log('WARNING [generateKeyPair()]', '[privKey]', privKey) //CF
 		return {
 			private: Buffer.from(privKey),
 			// remove version byte

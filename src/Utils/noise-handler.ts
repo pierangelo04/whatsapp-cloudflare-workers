@@ -127,7 +127,7 @@ export const makeNoiseHandler = ({
 			return keyEnc
 		},
 		encodeFrame: async(data: Buffer | Uint8Array) => { //CF
-			if (logForDevelopment) console.log('WARNING [encodeFrame()]', '[data]', data) //CF
+			if (logForDevelopment.show) console.log('WARNING [encodeFrame()]', '[data]', data) //CF
 			/*CF if(isFinished) {
 				data = encrypt(data)
 			} */

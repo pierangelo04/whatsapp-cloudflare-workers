@@ -4,7 +4,9 @@ import P from 'pino'
 import type { Boom } from '@hapi/boom'
 import { ExecutionContext, R2Bucket } from "@cloudflare/workers-types"
 import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion, logForDevelopment, makeCacheableSignalKeyStore, useMultiFileAuthState } from "../src"
+// @ts-ignore
 import registerWhatsappHtml from './registerWhatsappHtml.html'
+// @ts-ignore
 import sendMessageHtml from './sendMessageHtml.html'
 
 
@@ -21,6 +23,8 @@ export default {
 		const prefixUserBot = 'userBot'
 
 		const PASSWORD_ADMIN = '123456'
+
+		logForDevelopment.show = true
 
 		// Site: /site/register-whatsapp
 		if (pathName.startsWith('/site/register-whatsapp') || pathName === '/') {
@@ -247,7 +251,7 @@ async function apiSendMessage(userBot: string, phone: string, message: string, R
 		const startSock = async() => {
 			const { state, saveCreds } = await useMultiFileAuthState(userBot, R2FileStorage) //CF
 			const { version, isLatest } = await fetchLatestBaileysVersion()
-			if (logForDevelopment) console.log(`WARNING [startSock = async() => {...] Using WA v${version.join('.')}, isLatest: ${isLatest}`)
+			if (logForDevelopment.show) console.log(`WARNING [startSock = async() => {...] Using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
 			const sock = makeWASocket({
 				version,
@@ -268,15 +272,15 @@ async function apiSendMessage(userBot: string, phone: string, message: string, R
 						const { connection, lastDisconnect } = update
 						if(connection === 'close') {
 							if((lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut) {
-								if (logForDevelopment) console.log('WARNING [events["connection.update"]] Reconnection not allowed')
+								if (logForDevelopment.show) console.log('WARNING [events["connection.update"]] Reconnection not allowed')
 							}
 
 							else {
-								if (logForDevelopment) console.log('WARNING [events["connection.update"]] Connection closed. You are logged out')
+								if (logForDevelopment.show) console.log('WARNING [events["connection.update"]] Connection closed. You are logged out')
 							}
 						}
 
-						if (logForDevelopment) console.log('WARNING [events["connection.update"]] Connection update', update)
+						if (logForDevelopment.show) console.log('WARNING [events["connection.update"]] Connection update', update)
 					}
 
 					if(events['creds.update']) {
@@ -293,7 +297,7 @@ async function apiSendMessage(userBot: string, phone: string, message: string, R
 
 			while (!successSend && countAttempt < 2) {
 				countAttempt++;
-				if (logForDevelopment) console.log(`WARNING [while (!successSend && countAttempt < 2) {...] Attempted sending of message n°${countAttempt}`)
+				if (logForDevelopment.show) console.log(`WARNING [while (!successSend && countAttempt < 2) {...] Attempted sending of message n°${countAttempt}`)
 
 				try {
 					const jid = `${phone}@s.whatsapp.net`
@@ -307,16 +311,16 @@ async function apiSendMessage(userBot: string, phone: string, message: string, R
 
 					if (responseSendMessage?.status! >= 1) {
 						successSend = true
-						if (logForDevelopment) console.log("WARNING [responseSendMessage?.status! >= 1] {...] Message sent successfully!", responseSendMessage)
+						if (logForDevelopment.show) console.log("WARNING [responseSendMessage?.status! >= 1] {...] Message sent successfully!", responseSendMessage)
 
 						await delay(5000)
 						break
 					}
 
-					if (logForDevelopment) console.log("ERRO [!(responseSendMessage?.status! >= 1)] sending message, trying again in 2 seconds...", responseSendMessage)
+					if (logForDevelopment.show) console.log("ERRO [!(responseSendMessage?.status! >= 1)] sending message, trying again in 2 seconds...", responseSendMessage)
 				}
 				catch (error) {
-					if (logForDevelopment) console.log("ERRO [catch] sending message, trying again in 2 seconds...", error)
+					if (logForDevelopment.show) console.log("ERRO [catch] sending message, trying again in 2 seconds...", error)
 				}
 
 				await delay(2000)
@@ -334,7 +338,7 @@ async function apiSendMessage(userBot: string, phone: string, message: string, R
 	}
 
 	catch (error) {
-		if (logForDevelopment) console.log('ERRO [catch] [sendMessage()]:', error)
+		if (logForDevelopment.show) console.log('ERRO [catch] [sendMessage()]:', error)
 		return false
 	}
 }
@@ -350,7 +354,7 @@ async function apiRegisterWhatsapp(userBot: string, R2FileStorage: R2Bucket): Pr
 		const startSock = async() => {
 			const { state, saveCreds } = await useMultiFileAuthState(userBot, R2FileStorage)
 			const { version, isLatest } = await fetchLatestBaileysVersion()
-			if (logForDevelopment) console.log(`WARNING [startSock = async() => {...] Using WA v${version.join('.')}, isLatest: ${isLatest}`)
+			if (logForDevelopment.show) console.log(`WARNING [startSock = async() => {...] Using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
 			const sock = makeWASocket({
 				version,
@@ -373,17 +377,17 @@ async function apiRegisterWhatsapp(userBot: string, R2FileStorage: R2Bucket): Pr
 						if(connection === 'close') {
 							if((lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut) {
 								if ((Date.now() - dateNowForReconnection) <= 15000) {
-									if (logForDevelopment) console.log('WARNING [events["connection.update"]] Reconnection allowed')
+									if (logForDevelopment.show) console.log('WARNING [events["connection.update"]] Reconnection allowed')
 									startSock()
 								}
 
 								else {
-									if (logForDevelopment) console.log('WARNING [events["connection.update"]] Reconnection not allowed')
+									if (logForDevelopment.show) console.log('WARNING [events["connection.update"]] Reconnection not allowed')
 								}
 							}
 
 							else {
-								if (logForDevelopment) console.log('WARNING [events["connection.update"]] Connection closed. You are logged out')
+								if (logForDevelopment.show) console.log('WARNING [events["connection.update"]] Connection closed. You are logged out')
 							}
 						}
 
@@ -417,7 +421,7 @@ async function apiRegisterWhatsapp(userBot: string, R2FileStorage: R2Bucket): Pr
 	}
 
 	catch (error) {
-		if (logForDevelopment) console.log('ERRO [catch] [connectWhatsapp()]:', error)
+		if (logForDevelopment.show) console.log('ERRO [catch] [connectWhatsapp()]:', error)
 		return false
 	}
 }
