@@ -6,6 +6,7 @@ import { AuthenticationCreds, AuthenticationState, SignalDataTypeMap } from '../
 import { initAuthCreds } from './auth-utils'
 import { BufferJSON } from './generics'
 import { R2Bucket } from '@cloudflare/workers-types' //CF
+import { logForDevelopment } from '..'
 
 // We need to lock files due to the fact that we are using async functions to read and write files
 // https://github.com/WhiskeySockets/Baileys/issues/794
@@ -68,8 +69,8 @@ export const useMultiFileAuthState = async(folder: string, R2Bucket: R2Bucket): 
 	const writeData = async (data: any, file: string) => {
 		const filePath = join(join(folder, fixFileName(file)!))
 		const dataFormatted = JSON.stringify(data, BufferJSON.replacer)
-		console.log("data", data)
-		console.log("folder", folder)
+		if (logForDevelopment) console.log('WARNING [writeData()]', '[data]', data) //CF
+		if (logForDevelopment) console.log('WARNING [writeData()]', '[folder]', folder) //CF
 
 		await R2Bucket.put(filePath, dataFormatted, {
 			customMetadata: {
