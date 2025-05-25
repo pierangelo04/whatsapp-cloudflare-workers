@@ -5,7 +5,7 @@ import { AuthenticationCreds, BaileysEventEmitter, CacheStore, Chat, GroupMetada
 import { getContentType, normalizeMessageContent } from './messages'
 import { areJidsSameUser, isJidBroadcast, isJidStatusBroadcast, jidNormalizedUser } from '../WABinary'
 import { aesDecryptGCM, hmacSign } from './crypto'
-import { getKeyAuthor, toNumber } from './generics'
+import { toNumber } from './generics'
 import { downloadAndProcessHistorySyncNotification } from './history'
 import { ILogger } from './logger'
 
@@ -15,7 +15,6 @@ type ProcessMessageContext = {
 	creds: AuthenticationCreds
 	keyStore: SignalKeyStoreWithTransaction
 	ev: BaileysEventEmitter
-	getMessage: SocketConfig['getMessage']
 	logger?: ILogger
 	options: AxiosRequestConfig<{}>
 }
@@ -159,8 +158,7 @@ const processMessage = async(
 		creds,
 		keyStore,
 		logger,
-		options,
-		getMessage
+		options
 	}: ProcessMessageContext
 ) => {
 	const meId = creds.me!.id
@@ -419,9 +417,11 @@ const processMessage = async(
 			break
 		}
 
-	} else if(content?.pollUpdateMessage) {
+	} /*  else if(content?.pollUpdateMessage) {
 		const creationMsgKey = content.pollUpdateMessage.pollCreationMessageKey!
 		// we need to fetch the poll creation message to get the poll enc key
+		// TODO: make standalone, remove getMessage reference
+		// TODO: Remove entirely
 		const pollMsg = await getMessage(creationMsgKey)
 		if(pollMsg) {
 			const meIdNormalised = jidNormalizedUser(meId)
@@ -465,7 +465,7 @@ const processMessage = async(
 				'poll creation message not found, cannot decrypt update'
 			)
 		}
-	}
+		} */
 
 	if(Object.keys(chat).length > 1) {
 		ev.emit('chats.update', [chat])

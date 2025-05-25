@@ -7,7 +7,6 @@ import { proto } from '../../WAProto'
 import { version as baileysVersion } from '../Defaults/baileys-version.json'
 import { BaileysEventEmitter, BaileysEventMap, BrowsersMap, ConnectionState, DisconnectReason, WACallUpdateType, WAVersion } from '../Types'
 import { BinaryNode, getAllBinaryNodeChildren, jidDecode } from '../WABinary'
-import { ILogger } from './logger'
 
 const PLATFORM_MAP = {
 	'aix': 'AIX',
@@ -30,7 +29,7 @@ export const Browsers: BrowsersMap = {
 
 export const getPlatformId = (browser: string) => {
 	const platformType = proto.DeviceProps.PlatformType[browser.toUpperCase()]
-	return platformType ? platformType.toString().charCodeAt(0).toString() : '49' //chrome
+	return platformType ? platformType.toString() : '1' //chrome
 }
 
 export const BufferJSON = {
@@ -242,19 +241,6 @@ export function bindWaitForEvent<T extends keyof BaileysEventMap>(ev: BaileysEve
 }
 
 export const bindWaitForConnectionUpdate = (ev: BaileysEventEmitter) => bindWaitForEvent(ev, 'connection.update')
-
-export const printQRIfNecessaryListener = (ev: BaileysEventEmitter, logger: ILogger) => {
-	ev.on('connection.update', async({ qr }) => {
-		if(qr) {
-			const QR = await import('qrcode-terminal')
-				.then(m => m.default || m)
-				.catch(() => {
-					logger.error('QR code terminal not added as dependency')
-				})
-			QR?.generate(qr, { small: true })
-		}
-	})
-}
 
 /**
  * utility that fetches latest baileys version from the master branch.
