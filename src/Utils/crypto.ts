@@ -4,6 +4,9 @@ import { KEY_BUNDLE_TYPE } from '../Defaults'
 import { KeyPair } from '../Types'
 import { logForDevelopment } from '..'
 
+// insure browser & node compatibility
+const { subtle } = globalThis.crypto
+
 /** prefix version byte to the pub keys, required for some curve crypto functions */
 export const generateSignalPubKey = (pubKey: Uint8Array | Buffer) => (
 	pubKey.length === 33
@@ -141,7 +144,7 @@ export async function hkdf(
 		: new Uint8Array(0)
 
 	// Import the input key material
-	const importedKey = await crypto.subtle.importKey(
+	const importedKey = await subtle.importKey(
 		'raw',
 		inputKeyMaterial,
 		{ name: 'HKDF' },
@@ -150,7 +153,7 @@ export async function hkdf(
 	)
 
 	// Derive bits using HKDF
-	const derivedBits = await crypto.subtle.deriveBits(
+	const derivedBits = await subtle.deriveBits(
 		{
 			name: 'HKDF',
 			hash: 'SHA-256',
@@ -172,7 +175,7 @@ export async function derivePairingCodeKey(pairingCode: string, salt: Buffer): P
 	const saltBuffer = salt instanceof Uint8Array ? salt : new Uint8Array(salt)
 
 	// Import the pairing code as key material
-	const keyMaterial = await crypto.subtle.importKey(
+	const keyMaterial = await subtle.importKey(
 		'raw',
 		pairingCodeBuffer,
 		{ name: 'PBKDF2' },
@@ -182,7 +185,7 @@ export async function derivePairingCodeKey(pairingCode: string, salt: Buffer): P
 
 	// Derive bits using PBKDF2 with the same parameters
 	// 2 << 16 = 131,072 iterations
-	const derivedBits = await crypto.subtle.deriveBits(
+	const derivedBits = await subtle.deriveBits(
 		{
 			name: 'PBKDF2',
 			salt: saltBuffer,

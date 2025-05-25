@@ -1,6 +1,6 @@
 {
   "name": "whatsapp-cloudflare-workers",
-  "version": "6.7.16-worker-1.0.6",
+  "version": "6.7.17-worker-1.0.0",
   "description": "A version of baileys that works on cloudflare workers",
   "keywords": [
     "whatsapp",
@@ -16,7 +16,8 @@
   "types": "lib/index.d.ts",
   "files": [
     "lib/*",
-    "WAProto/*",
+    "WAProto/*.ts",
+    "WAProto/*.js",
     "WASignalGroup/*.js",
     "engine-requirements.js",
     "node_modules_custom/*"
@@ -75,6 +76,9 @@
     "wrangler": "^3.114.0"
   },
   "peerDependenciesMeta": {
+    "audio-decode": {
+      "optional": true
+    },
     "jimp": {
       "optional": true
     },
