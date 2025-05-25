@@ -48,6 +48,7 @@ export class USyncDeviceProtocol implements USyncQueryProtocol {
 			const keyIndexNode = getBinaryNodeChild(node, 'key-index-list')
 
 			if(Array.isArray(deviceListNode?.content)) {
+				// @ts-ignore
 				for(const { tag, attrs } of deviceListNode.content) {
 					const id = +attrs.id
 					const keyIndex = +attrs['key-index']

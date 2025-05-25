@@ -535,6 +535,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				const stanza: BinaryNode = {
 					tag: 'message',
 					attrs: {
+						// @ts-ignore
 						id: msgId,
 						type: getMessageType(message),
 						...(additionalAttributes || {})
