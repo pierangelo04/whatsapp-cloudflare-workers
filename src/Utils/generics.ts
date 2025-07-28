@@ -260,13 +260,13 @@ export const fetchLatestBaileysVersion = async(options: AxiosRequestConfig<{}> =
 		//CF \/
 		const result = await (await fetch(URL))?.text() as string
 		let versionArray: WAVersion = baileysVersion as WAVersion
-		const match = result.match(/version\s*=\s*(\[[^\]]+\])/);
+		const match = result.match(/version\s*=\s*(\[[^\]]+\])/)
 		if (match) {
 			try {
-				const parsed = JSON.parse(match[1]) as WAVersion;
-				versionArray = parsed;
+				const parsed = JSON.parse(match[1]) as WAVersion
+				versionArray = parsed
 			} catch (parseError) {
-				console.warn('Failed to parse version array:', parseError);
+				console.warn('Failed to parse version array:', parseError)
 			}
 		}
 		//CF /\
