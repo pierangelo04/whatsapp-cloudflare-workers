@@ -247,7 +247,7 @@ export const bindWaitForConnectionUpdate = (ev: BaileysEventEmitter) => bindWait
  * Use to ensure your WA connection is always on the latest version
  */
 export const fetchLatestBaileysVersion = async(options: AxiosRequestConfig<{}> = { }) => {
-	const URL = 'https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/src/Defaults/baileys-version.json'
+	const URL = 'https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/src/Defaults/baileys-version.ts'
 	try {
 		/*CF const result = await axios.get<{ version: WAVersion }>(
 			URL,
@@ -258,11 +258,21 @@ export const fetchLatestBaileysVersion = async(options: AxiosRequestConfig<{}> =
 		) */
 
 		//CF \/
-		const result = await (await fetch(URL))?.json() as { version: WAVersion }
+		const result = await (await fetch(URL))?.text() as string
+		let versionArray: WAVersion = baileysVersion as WAVersion
+		const match = result.match(/version\s*=\s*(\[[^\]]+\])/);
+		if (match) {
+			try {
+				const parsed = JSON.parse(match[1]) as WAVersion;
+				versionArray = parsed;
+			} catch (parseError) {
+				console.warn('Failed to parse version array:', parseError);
+			}
+		}
 		//CF /\
 
 		return {
-			version: result.version, //CF
+			version: versionArray, //CF
 			isLatest: true
 		}
 	} catch(error) {
