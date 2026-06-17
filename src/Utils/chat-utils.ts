@@ -284,7 +284,9 @@ export const decodeSyncdPatch = async(
 
                 const patchMac = generatePatchMac(msg.snapshotMac!, mutationmacs, toNumber(msg.version!.version), name, mainKey.patchMacKey)
                 if(Buffer.compare(patchMac, msg.patchMac!) !== 0) {
-                        throw new Boom('Invalid patch mac')
+                        logger?.warn?.(`Invalid patch mac for ${name} v${toNumber(msg.version!.version)} — skipping patch (fix #2456)`)
+                        // Return empty result instead of throwing — allows subsequent patches to be processed
+                        return await makeLtHashGenerator(initialState, logger).finish()
                 }
         }
 
