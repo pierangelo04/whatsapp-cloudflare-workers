@@ -276,9 +276,9 @@ export const decodeSyncdPatch = async(
                 const base64Key = Buffer.from(msg.keyId!.id!).toString('base64')
                 const mainKeyObj = await getAppStateSyncKey(base64Key)
                 if(!mainKeyObj) {
-                        throw new Boom(`failed to find key "${base64Key}" to decode patch`, { statusCode: 404, data: { msg } })
-                }
-
+                        logger?.warn?.(`[AppState] failed to find key "${base64Key}" to verify patch MAC for ${name} v${toNumber(msg.version!.version)} — skipping MAC check (fix #2456)`)
+                        // Proceed without MAC verification
+                } else {
                 const mainKey = await mutationKeys(mainKeyObj.keyData!)
                 const mutationmacs = msg.mutations!.map(mutation => mutation.record!.value!.blob!.slice(-32))
 
@@ -288,6 +288,8 @@ export const decodeSyncdPatch = async(
                         // Return empty result instead of throwing — allows subsequent patches to be processed
                         return await makeLtHashGenerator(initialState, logger).finish()
                 }
+                }
+
         }
 
         const result = await decodeSyncdMutations(msg.mutations!, initialState, getAppStateSyncKey, onMutation, validateMacs, logger)
@@ -409,13 +411,13 @@ export const decodeSyncdSnapshot = async(
                 const base64Key = Buffer.from(snapshot.keyId!.id!).toString('base64')
                 const keyEnc = await getAppStateSyncKey(base64Key)
                 if(!keyEnc) {
-                        throw new Boom(`failed to find key "${base64Key}" to decode mutation`)
-                }
-
+                        logger?.warn?.(`[AppState] failed to find key "${base64Key}" to verify snapshot MAC for ${name} — proceeding with partial state (fix #2456)`)
+                } else {
                 const result = await mutationKeys(keyEnc.keyData!)
                 const computedSnapshotMac = generateSnapshotMac(newState.hash, newState.version, name, result.snapshotMacKey)
                 if(Buffer.compare(snapshot.mac!, computedSnapshotMac) !== 0) {
                         logger?.warn?.(`failed to verify LTHash at ${newState.version} of ${name} from snapshot — proceeding with partial state (fix #2456)`)
+                }
                 }
         }
 
@@ -478,7 +480,8 @@ export const decodePatches = async(
                         const base64Key = Buffer.from(keyId!.id!).toString('base64')
                         const keyEnc = await getAppStateSyncKey(base64Key)
                         if(!keyEnc) {
-                                throw new Boom(`failed to find key "${base64Key}" to decode mutation`)
+                                logger?.warn?.(`[AppState] failed to find key "${base64Key}" to verify patch MAC for ${name} — stopping patch processing, keeping state so far (fix #2456)`)
+                                break
                         }
 
                         const result = await mutationKeys(keyEnc.keyData!)

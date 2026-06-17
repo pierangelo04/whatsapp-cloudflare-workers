@@ -533,14 +533,17 @@ export const makeChatsSocket = (config: SocketConfig) => {
                                                                 { name, error: error.stack },
                                                                 `failed to sync state from version${isIrrecoverableError ? '' : ', removing and trying from scratch'}`
                                                         )
-                                                        await authState.keys.set({ 'app-state-sync-version': { [name]: null } })
+                                                        if(isIrrecoverableError) {
+                                                                // preserve existing state — do NOT reset version to null
+                                                                // this prevents chatModify pre-flight check from blocking all operations
+                                                                logger.warn(`[AppState] ${name} sync failed irrecoverably — preserving existing state instead of resetting (fix #2456)`)
+                                                                collectionsToHandle.delete(name)
+                                                        } else {
+                                                                // recoverable: reset version to resync from scratch
+                                                                await authState.keys.set({ 'app-state-sync-version': { [name]: null } })
+                                                        }
                                                         // increment number of retries
                                                         attemptsMap[name] = (attemptsMap[name] || 0) + 1
-
-                                                        if(isIrrecoverableError) {
-                                                                // stop retrying
-                                                                collectionsToHandle.delete(name)
-                                                        }
                                                 }
                                         }
                                 }
