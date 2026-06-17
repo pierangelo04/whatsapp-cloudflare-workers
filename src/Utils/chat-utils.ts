@@ -377,7 +377,8 @@ export const decodeSyncdSnapshot = async(
         snapshot: proto.ISyncdSnapshot,
         getAppStateSyncKey: FetchAppStateSyncKey,
         minimumVersionNumber: number | undefined,
-        validateMacs = true
+        validateMacs = true,
+        logger?: ILogger
 ) => {
         const newState = newLTHashState()
         newState.version = toNumber(snapshot.version!.version)
