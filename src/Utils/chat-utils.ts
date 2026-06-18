@@ -274,15 +274,18 @@ export const decodeSyncdPatch = async(
 ) => {
         if(validateMacs) {
                 const base64Key = Buffer.from(msg.keyId!.id!).toString('base64')
+                logger?.warn?.(`[AppState-DEBUG] decodeSyncdPatch(${name} v${toNumber(msg.version!.version)}): patchKeyId="${base64Key}", mutations=${msg.mutations?.length || 0}`)
                 const mainKeyObj = await getAppStateSyncKey(base64Key)
                 if(!mainKeyObj) {
                         logger?.warn?.(`[AppState] failed to find key "${base64Key}" to verify patch MAC for ${name} v${toNumber(msg.version!.version)} — skipping MAC check (fix #2456)`)
                         // Proceed without MAC verification
                 } else {
+                logger?.warn?.(`[AppState-DEBUG] Key FOUND for "${base64Key}": keyDataLen=${mainKeyObj.keyData?.length || 0}, keyDataHex=${Buffer.from(mainKeyObj.keyData?.slice?.(0, 8) || []).toString('hex')}, fingerprint=${!!mainKeyObj.fingerprint}, ts=${mainKeyObj.timestamp}`)
                 const mainKey = await mutationKeys(mainKeyObj.keyData!)
                 const mutationmacs = msg.mutations!.map(mutation => mutation.record!.value!.blob!.slice(-32))
 
                 const patchMac = generatePatchMac(msg.snapshotMac!, mutationmacs, toNumber(msg.version!.version), name, mainKey.patchMacKey)
+                logger?.warn?.(`[AppState-DEBUG] MAC compare: computed=${patchMac.toString('hex').slice(0,16)}..., received=${Buffer.from(msg.patchMac || []).toString('hex').slice(0,16)}..., snapshotMac=${Buffer.from(msg.snapshotMac || []).toString('hex').slice(0,16)}..., patchVersion=${toNumber(msg.version!.version)}, type=${name}`)
                 if(Buffer.compare(patchMac, msg.patchMac!) !== 0) {
                         logger?.warn?.(`Invalid patch mac for ${name} v${toNumber(msg.version!.version)} — skipping patch (fix #2456)`)
                         // Return empty result instead of throwing — allows subsequent patches to be processed
