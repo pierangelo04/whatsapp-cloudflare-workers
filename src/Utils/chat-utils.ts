@@ -122,6 +122,39 @@ const generatePatchMac = (snapshotMac: Uint8Array, valueMacs: Uint8Array[], vers
 
 export const newLTHashState = (): LTHashState => ({ version: 0, hash: Buffer.alloc(128), indexValueMap: {} })
 
+//CF \/ Patched: ported from Baileys v7 to ensure version is always a valid number
+// Without this, appPatch uses `currentSyncVersion || newLTHashState()` which can pass
+// a state with version=undefined or NaN to encodeSyncdPatch, producing an invalid
+// patch MAC that the server rejects with 401 device_removed.
+export const ensureLTHashStateVersion = (state: LTHashState): LTHashState => {
+        if(typeof state.version !== 'number' || isNaN(state.version)) {
+                state.version = 0
+        }
+
+        return state
+}
+
+export const MAX_SYNC_ATTEMPTS = 2
+
+/**
+ * Check if an error is a missing app state sync key.
+ * WA Web treats these as "Blocked" (waits for key arrival), not fatal.
+ * In Baileys we retry with a snapshot which may use a different key.
+ */
+export const isMissingKeyError = (error: any): boolean => {
+        return error?.data?.isMissingKey === true
+}
+
+/**
+ * Determines if an app state sync error is unrecoverable.
+ * TypeError indicates a WASM crash; otherwise we give up after MAX_SYNC_ATTEMPTS.
+ * Missing keys are NOT checked here — they are handled separately as "Blocked".
+ */
+export const isAppStateSyncIrrecoverable = (error: any, attempts: number): boolean => {
+        return attempts >= MAX_SYNC_ATTEMPTS || error?.name === 'TypeError'
+}
+//CF /\
+
 export const encodeSyncdPatch = async(
         { type, index, syncAction, apiVersion, operation }: WAPatchCreate,
         myAppStateKeyId: string,
@@ -130,7 +163,7 @@ export const encodeSyncdPatch = async(
 ) => {
         const key = !!myAppStateKeyId ? await getAppStateSyncKey(myAppStateKeyId) : undefined
         if(!key) {
-                throw new Boom(`myAppStateKey ("${myAppStateKeyId}") not present`, { statusCode: 404 })
+                throw new Boom(`myAppStateKey ("${myAppStateKeyId}") not present`, { data: { isMissingKey: true }, statusCode: 404 })
         }
 
         const encKeyId = Buffer.from(myAppStateKeyId, 'base64')
