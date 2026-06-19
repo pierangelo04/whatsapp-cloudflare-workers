@@ -388,7 +388,10 @@ export const decodeSyncdSnapshot = async(
         logger?: ILogger
 ) => {
         const newState = newLTHashState()
-        newState.version = toNumber(snapshot.version!.version)
+        //CF \/ Patched: snapshot.version may be null/undefined when the server returns
+        // a partial snapshot (related to fix #2456). Use optional chaining and fallback to 0.
+        newState.version = toNumber((snapshot.version as any)?.version ?? 0)
+        //CF /\
 
         const mutationMap: ChatMutationMap = {}
         const areMutationsRequired = typeof minimumVersionNumber === 'undefined'
