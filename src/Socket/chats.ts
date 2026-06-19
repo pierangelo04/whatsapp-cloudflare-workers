@@ -4,7 +4,7 @@ import { proto } from '../../WAProto'
 import { DEFAULT_CACHE_TTLS, PROCESSABLE_HISTORY_TYPES } from '../Defaults'
 import { ALL_WA_PATCH_NAMES, BotListInfo, ChatModification, ChatMutation, LTHashState, MessageUpsertType, PresenceData, SocketConfig, WABusinessHoursConfig, WABusinessProfile, WAMediaUpload, WAMessage, WAPatchCreate, WAPatchName, WAPresence, WAPrivacyCallValue, WAPrivacyGroupAddValue, WAPrivacyMessagesValue, WAPrivacyOnlineValue, WAPrivacyValue, WAReadReceiptsValue } from '../Types'
 import { LabelActionBody } from '../Types/Label'
-import { chatModificationToAppPatch, ChatMutationMap, decodePatches, decodeSyncdSnapshot, encodeSyncdPatch, extractSyncdPatches, generateProfilePicture, getHistoryMsg, newLTHashState, processSyncAction } from '../Utils'
+import { chatModificationToAppPatch, ChatMutationMap, decodePatches, decodeSyncdSnapshot, encodeSyncdPatch, ensureLTHashStateVersion, extractSyncdPatches, generateProfilePicture, getHistoryMsg, isAppStateSyncIrrecoverable, isMissingKeyError, newLTHashState, processSyncAction } from '../Utils'
 import { makeMutex } from '../Utils/make-mutex'
 import processMessage from '../Utils/process-message'
 import { BinaryNode, getBinaryNodeChild, getBinaryNodeChildren, jidNormalizedUser, reduceBinaryNodeToDictionary, S_WHATSAPP_NET } from '../WABinary'
@@ -691,7 +691,10 @@ export const makeChatsSocket = (config: SocketConfig) => {
                                                 await resyncAppState([name], false)
 
                                                 const { [name]: currentSyncVersion } = await authState.keys.get('app-state-sync-version', [name])
-                                                initial = currentSyncVersion || newLTHashState()
+                                                //CF \/ Patched: use ensureLTHashStateVersion (ported from Baileys v7)
+                                                // prevents invalid state.version (undefined/NaN) from producing bad patch MACs
+                                                initial = currentSyncVersion ? ensureLTHashStateVersion(currentSyncVersion) : newLTHashState()
+                                                //CF /\
 
                                                 encodeResult = await encodeSyncdPatch(
                                                         patchCreate,
