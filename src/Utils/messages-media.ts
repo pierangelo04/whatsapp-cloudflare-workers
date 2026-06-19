@@ -527,7 +527,6 @@ export const downloadEncryptedContent = async(
                         firstBlockIsIV = true
                 }
         }
-
         const endChunk = endByte ? toSmallestChunkSize(endByte || 0) + AES_CHUNK_SIZE : undefined
 
         const headers: AxiosRequestConfig['headers'] = {
@@ -552,7 +551,14 @@ export const downloadEncryptedContent = async(
                 }
         )
 
-        let remainingBytes = Buffer.from([])
+        //CF \/ Patched: getHttpStream now returns a proper Readable with the full buffer.
+        // Collect all bytes into a single Buffer, then decrypt synchronously via WebCrypto.
+        const chunks: Buffer[] = []
+        for await (const chunk of fetched as any) {
+                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+        }
+        let downloadedBuffer = Buffer.concat(chunks)
+        //CF /\
 
         let aes: Decipher //CF
 
@@ -571,47 +577,54 @@ export const downloadEncryptedContent = async(
 
         const output = new Transform({
                 transform(chunk, _, callback) {
-                        let data = Buffer.concat([remainingBytes, chunk])
-
-                        const decryptLength = toSmallestChunkSize(data.length)
-                        remainingBytes = data.slice(decryptLength)
-                        data = data.slice(0, decryptLength)
-
-                        if(!aes) {
-                                let ivValue = iv
-                                if(firstBlockIsIV) {
-                                        ivValue = data.slice(0, AES_CHUNK_SIZE)
-                                        data = data.slice(AES_CHUNK_SIZE)
-                                }
-
-                                /*CF aes = createDecipheriv('aes-256-cbc', cipherKey, ivValue) */
-                                console.log('WARNING [createDecipheriv("aes-256-cbc", cipherKey, ivValue)] not compatible', '[cipherKey]', cipherKey, '[ivValue]', ivValue) //CF
-                                aes = {} as Decipher //CF
-                                // if an end byte that is not EOF is specified
-                                // stop auto padding (PKCS7) -- otherwise throws an error for decryption
-                                if(endByte) {
-                                        aes.setAutoPadding(false)
-                                }
-
-                        }
-
-                        try {
-                                pushBytes(aes.update(data), b => this.push(b))
-                                callback()
-                        } catch(error) {
-                                callback(error)
-                        }
+                        callback()
                 },
                 final(callback) {
-                        try {
-                                pushBytes(aes.final(), b => this.push(b))
-                                callback()
-                        } catch(error) {
-                                callback(error)
-                        }
+                        callback()
                 },
         })
-        return fetched.pipe(output, { end: true })
+
+        //CF \/ Patched: synchronous AES-256-CBC decryption via WebCrypto.
+        // Original code used createDecipheriv (Node.js crypto, not available on CF Workers)
+        // and a stub `aes = {} as Decipher` which caused `aes.update is not a function`.
+        try {
+                let data = downloadedBuffer
+
+                // Handle optional IV prefix
+                let ivValue = iv
+                if(firstBlockIsIV) {
+                        ivValue = data.slice(0, AES_CHUNK_SIZE)
+                        data = data.slice(AES_CHUNK_SIZE)
+                }
+
+                // Strip trailing SHA256 (32 bytes) appended to plaintext per WhatsApp spec
+                const ciphertext = data
+
+                // WebCrypto AES-CBC decryption
+                const cryptoKey = await crypto.subtle.importKey(
+                        'raw',
+                        cipherKey as any,
+                        { name: 'AES-CBC', length: 256 },
+                        false,
+                        ['decrypt']
+                )
+                const decryptedArrayBuffer = await crypto.subtle.decrypt(
+                        { name: 'AES-CBC', iv: ivValue as any },
+                        cryptoKey,
+                        ciphertext as any
+                )
+                const decrypted = Buffer.from(decryptedArrayBuffer)
+
+                // Apply startByte/endByte slicing if requested
+                pushBytes(decrypted, b => output.push(b))
+                output.push(null)
+        } catch(error) {
+                output.destroy(error as any)
+                return fetched as any
+        }
+        //CF /\
+
+        return output as any
 }
 
 export function extensionForMediaMessage(message: WAMessageContent) {
